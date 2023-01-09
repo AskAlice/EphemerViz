@@ -31,7 +31,7 @@ services:
 
   tempo:
     container_name: tempo
-    image: grafana/tempo:1.0.1
+    image: grafana/tempo:1.4.1
     command: ['-config.file=/etc/tempo.yaml']
     volumes:
       - ./etc/tempo-local.yaml:/etc/tempo.yaml
@@ -94,7 +94,7 @@ services:
 
   grafana:
     container_name: grafana
-    image: grafana/grafana:8.1.0-ubuntu
+    image: grafana/grafana:9.3.0-ubuntu
     volumes:
       - ./data/grafana-data/datasources:/etc/grafana/provisioning/datasources
       - ./data/grafana-data/dashboards-provisioning:/etc/grafana/provisioning/dashboards
