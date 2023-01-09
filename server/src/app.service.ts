@@ -1,18 +1,79 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  Param,
+  Req,
+  Res,
+} from '@nestjs/common';
 import type { Ephemeris, Mass } from '@prisma/client';
 import { Span, TraceService } from 'nestjs-otel';
 import { UploadResponseDto } from './app.dto';
+import { logger } from './logger/logger';
 import { PrismaService } from './prisma/prisma.service';
 import fastify = require('fastify');
 import xml2json = require('xml2js');
+
 @Injectable()
 export class AppService {
   constructor(private prisma: PrismaService, private tracer: TraceService) {}
+
   @Span()
   getHello(): string | undefined {
     return 'Hello World!';
   }
 
+  @Span()
+  async getSatellite(
+    @Req() req: fastify.FastifyRequest,
+    @Res() res: fastify.FastifyReply<any>,
+    @Param() params,
+  ): Promise<string> {
+    const { id } = params;
+    const satellite = await this.prisma.satellite.findUniqueOrThrow({
+      where: {
+        ID: id,
+      },
+      include: { Ephemeris: true },
+    });
+
+    res.send(JSON.stringify(satellite));
+    return JSON.stringify(satellite);
+  }
+  @Span()
+  async getEphemerisData(
+    @Req() req: fastify.FastifyRequest,
+    @Res() res: fastify.FastifyReply<any>,
+    @Param() params,
+  ): Promise<string> {
+    const { id, date } = params;
+    const dt = new Date(date);
+
+    const satellite = await this.prisma.satellite.findUniqueOrThrow({
+      where: {
+        ID: id,
+      },
+      include: {
+        Ephemeris: {
+          select: {
+            Epoch: true,
+            x: true,
+            y: true,
+            z: true,
+          },
+          where: {
+            ID: id,
+            Epoch: {
+              gte: dt,
+              lt: new Date(dt.getTime() + 86400000 * 2 /*2 days of data */),
+            },
+          },
+        },
+      },
+    });
+
+    res.send(JSON.stringify(satellite));
+    return JSON.stringify(satellite);
+  }
   dateFromDay(year, day): Date {
     const date = new Date(year, 0); // initialize a date in `year-01-01`
     return new Date(date.setDate(day)); // add the number of days
@@ -48,20 +109,16 @@ export class AppService {
       let date = this.dateFromDay(year, day);
 
       date = new Date(
-        date.setUTCHours(
-          Number(hour),
-          Number(minute),
-          Number(second),
-          Number(ms),
-        ),
+        date.setUTCHours(Number(hour), Number(minute), Number(second)),
       );
+      logger.info({ year, day, hour, minute, second, ms, date });
       const eph: Omit<Ephemeris, 'ID'> = {
         Epoch: date,
         x: Number(v?.X?.[0]?.['_']) / 100, // scales the points for three.js so that 1km = 10 meters
         y: Number(v?.Y?.[0]?.['_']) / 100,
         z: Number(v?.Z?.[0]?.['_']) / 100,
       };
-      locationData = { ...locationData, [`${date.getUTCSeconds()}`]: eph };
+      locationData = { ...locationData, [`${date.toUTCString()}`]: eph };
     });
 
     return { Name, ID, Orbiting, locationData };

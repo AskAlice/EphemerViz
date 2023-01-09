@@ -12,16 +12,24 @@ export class AppController {
   getHello(): string {
     return this.appService.getHello();
   }
-
   @Span()
-  @Get('/ephemeris/:id/:date')
-  async getEphemeris(
+  @Get('/satellite/:id')
+  async getSatellite(
     @Req() req: fastify.FastifyRequest,
     @Res() res: fastify.FastifyReply<any>,
     @Param() params,
   ) {
-    // todo: implement
-    // return this.appService.getEphemerisData(req, res, params);
+    return this.appService.getSatellite(req, res, params);
+  }
+
+  @Span()
+  @Get('/ephemeris/:id/:date')
+  async getEphemerisAtDate(
+    @Req() req: fastify.FastifyRequest,
+    @Res() res: fastify.FastifyReply<any>,
+    @Param() params,
+  ) {
+    return this.appService.getEphemerisData(req, res, params);
   }
   /* takes in an XML file from a via multipart form upload, parses it, and upserts the data to the db */
   @Span()

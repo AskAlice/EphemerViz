@@ -7,15 +7,14 @@ import {
   useTexture,
 } from '@react-three/drei'
 import { Canvas } from '@react-three/fiber'
-import * as random from 'maath/random/dist/maath-random.cjs'
-import { memo, useRef, useState } from 'react'
+import { memo, Suspense, useEffect, useRef, useState } from 'react'
 import * as THREE from 'three'
 
 function Earth() {
   const ref = useRef<any>({})
   const earth = useTexture({
     map: '8k_earth_daymap.jpg',
-    bumpMap: 'EARTH_DISPLACE_42K_16BITS_preview.jpg',
+
     normalMap: '8k_earth_normal_map.jpg',
     emissiveMap: '8k_earth_nightmap.jpg',
   })
@@ -41,10 +40,8 @@ function Earth() {
         <meshStandardMaterial
           attach='material'
           {...earth}
-          bumpScale={0.01}
           emissive={new THREE.Color('#fff')}
           emissiveIntensity={5}
-          displacementScale={0.2}
         />
       </mesh>
     </group>
@@ -52,27 +49,55 @@ function Earth() {
 }
 function Stars(props: any) {
   const ref = useRef()
-  const [sphere] = useState(() =>
-    random.inSphere(new Float32Array(5000), { radius: 3 }),
-  )
+  const count = 100 // number point accross one axis ini akan generate point 10.00 dimana count hanya 100 karena multiply
+  const sep = 3 //merupakan distance dari tiap point
+  const [data, setData] = useState<{
+    ID: string
+    Name: string
+    Orbiting: string
+    Ephemeris: any
+  }>()
+  const [loading, setLoading] = useState(true)
+  useEffect(() => {
+    const loadData = async () => {
+      const data = await (
+        await fetch('/ephemeris/1998-067-A/2021-08-26')
+      ).json()
+      setData(data)
+      setLoading(false)
+    }
+    loadData()
+  }, [])
+  console.log(data)
 
+  let positions: Array<any> = []
+
+  data?.Ephemeris.forEach((e) => {
+    console.log(e)
+    positions.push(e.x / 20, e.y / 20, e.z / 20)
+  })
+  console.log(positions)
+  if (data) {
+    console.log(data)
+  }
   return (
     <group rotation={[0, 0, Math.PI / 4]}>
-      <Points
-        ref={ref}
-        positions={sphere}
-        stride={3}
-        frustumCulled={false}
-        {...props}
-      >
-        <PointMaterial
-          transparent
-          color='#ffa0e0'
-          size={0.005}
-          sizeAttenuation={true}
-          depthWrite={false}
-        />
-      </Points>
+      {!loading && (
+        <Points
+          ref={ref as any}
+          stride={3}
+          frustumCulled={false}
+          positions={new Float32Array(positions)}
+        >
+          <PointMaterial
+            transparent
+            color='#ffa0e0'
+            size={0.02}
+            sizeAttenuation={true}
+            depthWrite={false}
+          />
+        </Points>
+      )}
     </group>
   )
 }
@@ -92,12 +117,14 @@ const Shadows = memo(() => (
 
 export default function Visualizer() {
   return (
-    <Canvas>
-      <Earth />
-      {/* <Stars /> */}
+    <Suspense fallback={<>Loading...</>}>
+      <Canvas>
+        <Earth />
+        <Stars />
 
-      <OrbitControls makeDefault />
-      <Shadows />
-    </Canvas>
+        <OrbitControls makeDefault />
+        <Shadows />
+      </Canvas>
+    </Suspense>
   )
 }
