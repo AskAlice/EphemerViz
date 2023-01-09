@@ -1,0 +1,20 @@
+{
+  "folders": [
+    {
+      "name": "@ephemerviz/client",
+      "path": "./client"
+    },
+    {
+      "name": "@ephemerviz/server",
+      "path": "./server"
+    },
+    {
+      "name": "ephemerviz",
+      "path": "."
+    }
+  ],
+  "settings": {},
+  "extensions": {
+    "recommendations": ["esbenp.prettier-vscode"]
+  }
+}

@@ -1,0 +1,50 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../../node_modules/.prisma/client"
+  previewFeatures = ["postgresqlExtensions"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  extensions = [timescaledb]
+}
+                    // <OBJECT_NAME>ISS</OBJECT_NAME>
+                    // <OBJECT_ID>1998-067-A</OBJECT_ID>
+                    // <CENTER_NAME>EARTH</CENTER_NAME>
+                    // <REF_FRAME>EME2000</REF_FRAME>
+                    //  <EPOCH>2022-049T12:00:00.000Z</EPOCH>
+                    //  <X units="km">6432.3383570273099</X>
+                    //  <Y units="km">1810.4140135800701</Y>
+                    //  <Z units="km">1210.74216647911</Z>
+
+
+enum Mass {
+  EARTH 
+  MOON
+  MARS
+}
+enum ReferenceFrame {
+  EME2000
+  WGS84
+}
+
+model Satellite {
+  ID String @unique @map("ID") @id
+  Name String @map("Name")
+  Orbiting Mass @map("Orbiting") // the primary gravitational mass of influence
+  Ephemeris Ephemeris[]
+}
+
+model Ephemeris {
+  ID String @map("ID")
+  Epoch DateTime @map("Epoch") 
+  Satellite Satellite @relation(fields: [ID], references: [ID])
+  x Float @map("x")
+  y Float @map("y")
+  z Float @map("z")
+  @@unique([ID, Epoch])
+}
