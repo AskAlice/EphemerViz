@@ -20,7 +20,6 @@ function Earth() {
   })
   return (
     <group ref={ref}>
-      {/* <Stars /> */}
       <rectAreaLight
         intensity={1}
         position={[10, 10, 10]}
@@ -47,10 +46,8 @@ function Earth() {
     </group>
   )
 }
-function Stars(props: any) {
+function SatellitePosition(props: any) {
   const ref = useRef()
-  const count = 100 // number point accross one axis ini akan generate point 10.00 dimana count hanya 100 karena multiply
-  const sep = 3 //merupakan distance dari tiap point
   const [data, setData] = useState<{
     ID: string
     Name: string
@@ -81,7 +78,7 @@ function Stars(props: any) {
     console.log(data)
   }
   return (
-    <group rotation={[0, 0, Math.PI / 4]}>
+    <group>
       {!loading && (
         <Points
           ref={ref as any}
@@ -120,7 +117,7 @@ export default function Visualizer() {
     <Suspense fallback={<>Loading...</>}>
       <Canvas>
         <Earth />
-        <Stars />
+        <SatellitePosition />
 
         <OrbitControls makeDefault />
         <Shadows />
